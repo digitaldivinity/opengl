@@ -12,33 +12,37 @@ const double SPEED = 0.1;
 
 struct Camera{
 	double x,y,z;
-	double dx,dy,dz;
-	double speed;
+	double oxz,oyz;
+	double sensitivity;
 	Camera(){
-		x=y=z=dx=dy=0;
-		dz=-1;
-		speed=0.1;
+		x=y=oxz=oyz=z=0;
+		sensitivity=0.3;
 	}
-	//normalize direction to speed
-	void ndts(){
-		double module=sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
-		dx=dx*speed/module;
-		dy=dy*speed/module;
-		dz=dz*speed/module;
+	void changeAngle(double phi,double psi){
+		//нуждается в доработке, oxz может увеличиться слишком сильно
+		oxz+=phi*sensitivity;
+		oyz+=psi*sensitivity;
+		if (oxz>=360) oxz-=360;
+		else if (oxz<=0) oxz=360-oxz;
+		if (oyz>85) oyz=85;
+		else if (oyz<-85) oyz=-85;
+		printf("angle %lf %lf\n",oxz,oyz);
 	}
 	void goForward(){
-		ndts();
+		double dx,dy,dz;
+		double r1=3.14*oyz/180;
+		double r2=3.14*oxz/180;
+		dy=-sin(r1);
+		dx=cos(r1)*sin(r2);
+		dz=cos(r1)*sin(r2);
 		x+=dx;
 		y+=dy;
 		z+=dz;
-	}
-    void newdir(double x,double y,double z){
-		dx=x;
-		dy=y;
-		dz=z;
+		printf("moving %lf %lf %lf \n ",dx,dy,dz);
 	}
 
-}
+//s
+} cam;
 
 int startx,starty;
 int deltax,deltay;
@@ -51,9 +55,9 @@ void Display(void){
 	glLoadIdentity();
 	//glOrtho(-3,3,-3,3,1,10);
 	gluPerspective(45,1,0.1,500);
-	glRotated(deltax,sy,sz,sx);
-	glRotated(deltay,sz,sx,sy);
-	glTranslated(sx,sy,sz);
+	glRotated(cam.oxz,0,-1,0);
+	glRotated(cam.oyz,-1,0,0);
+	glTranslated(cam.x,cam.y,cam.z);
 
 
 	//glRotated(deltay,sx,sy,sz);
@@ -75,26 +79,13 @@ void Display(void){
 	glDrawArrays(GL_TRIANGLES,0, obj.getSize());
 
 	glFlush();
-	printf("Display()\n");
+	//printf("Display()\n");
 }
 
 void Reshape(GLint w,GLint h){
 	Width=w;
 	Height=h;
 	glViewport(0,0,w,h);
-	//glMatrixMode(GL_PROJECTION);
-	//glLoadIdentity();
-
-	//glOrtho(0,w,0,h,-200,200);
-	//ВТОРОЙ ПАРАМЕТР ЧТО-ТО ТИПО РАСТЯЖЕНИЯ
-	//glFrustum(-1,1,-1,1	,1,300);
-	//gluPerspective(45,1,1,500);
-
-	//glTranslated(sx,sy,sz);
-
-	//glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
-	//Display();
 	printf("Reshape()\n");
 	glutPostRedisplay();
 }
@@ -104,46 +95,52 @@ void Keyboard(unsigned char key, int x, int y){
 	const char w='w';
 	if (key== ESCAPE) exit(0);
 	if (key=='w') {
-		sz+=SPEED;
-		printf("w\n");
+		cam.z+=SPEED;
+		//cam.goForward();
+		//printf("w\n");
 	}
 	if (key=='s'){
-		sz-=SPEED;
+		cam.z-=SPEED;
+		//cam.goBack();
 		printf("s\n");
 	}
 	if (key=='d'){
-		sx+=SPEED;
+		cam.x-=SPEED;
 		printf("d\n");
 	}
 	if (key=='a'){
-		sx-=SPEED;
+		cam.x+=SPEED;
 		printf("a\n");
 	}
 	if (key=='q'){
-		sy+=SPEED;
+		cam.y+=SPEED;
 		printf("d\n");
 	}
 	if (key=='e'){
-		sy-=SPEED;
+		cam.y-=SPEED;
 		printf("a\n");
 	}
-	printf("Keyboard\n");
+	if (key=='z'){
+		cam.x=cam.y=cam.z=cam.oxz=cam.oyz=0;
+	}
+	printf("%lf %lf %lf\n",cam.x,cam.y,cam.z);
+	//printf("Keyboard\n");
 	glutPostRedisplay();
 }
 
 void MouseButton(int button, int state, int x, int y) {
 
 	// только при начале движения, если нажата левая кнопка
-	printf("%d %d\n",x,y);
+	//printf("%d %d\n",x,y);
 	if (button == GLUT_LEFT_BUTTON) {
 
 		// когда кнопка отпущена
 		if (state == GLUT_UP) {
-			printf("MouseButton() left off %d %d\n",x,y);
+			//printf("MouseButton() left off %d %d\n",x,y);
 
 		}
 		else  {// state = GLUT_DOWN
-			printf("MouseButton() left on %d %d\n",x,y);
+			//printf("MouseButton() left on %d %d\n",x,y);
 			startx=x;
 			starty=y;
 		}
@@ -153,7 +150,10 @@ void MouseButton(int button, int state, int x, int y) {
 void MouseMove(int x, int y) {
 	deltax=startx-x;
 	deltay=starty-y;
-	printf("MouseMove()\nsxy %d %d\nxy %d %d\ndxy %d %d\n",startx,starty,x,y,deltax,deltay);
+	startx=x;
+	starty=y;
+	cam.changeAngle(deltax,deltay);
+	//printf("MouseMove()\nsxy %d %d\nxy %d %d\ndxy %d %d\n",startx,starty,x,y,deltax,deltay);
 	glutPostRedisplay();
 
 }
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 
 	glShadeModel(GL_SMOOTH);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB );
-	glutInitWindowPosition(400,400);
+	glutInitWindowPosition(500,500);
 	glutInitWindowSize(Width,Height);
 	glutCreateWindow("Window name");
 
