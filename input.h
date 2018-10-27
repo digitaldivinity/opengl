@@ -1,5 +1,5 @@
-#ifndef korchinput
-#define korchinput
+#ifndef KORCHINPUT
+#define KORCHINPUT
 
 #include <stdlib.h>
 #include <stdio.h>
