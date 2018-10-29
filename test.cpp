@@ -6,39 +6,42 @@
 #include "input.h"
 #include "camera.h"
 #include <omp.h>
-
-
+#include "bmpparser.h"
 /*
- * полет вперед и по сторонам
- * плавный полет
+ * полет вперед и по сторонам +
+ * плавный полет +-
+ * регулировка относительно фпс +- если падает фпс то падает и скорость камеры
  * сделать чтобы при изменении размера не колбасило +
- * сделать измерение времени между вызовами таймера
- * добавить двойную буферизацию
+ * сделать измерение времени между вызовами таймера +
+ * добавить двойную буферизацию +
+ * отключил редислпей в обработчике клавитуры +
+ * для мышки недостаточно таймера +
+ * перенести все измерение времени в дисплей, баг появляется
+ * редисплей от мышки не учитывается в фпс
+ * 
  */
 
-Camera cam;
+Camera cam(0.3,0.5);
 double FPS;
+double fps=0;
+int fpsn=0;
 int flag=0; //это нужно подгонять под фпс
 const double SPEED = 0.1;
 double tEnd,tStart;
 int Angle=1;
 GLint Width=1024,  Height=1024;
-//констрастность
+
+unsigned char * array=bmpparser("tiles.bmp");
+unsigned char * array1 = new unsigned char[64*64];
+GLUquadricObj * smthg = gluNewQuadric();
+GLUquadricObj * earth = gluNewQuadric();
 float mat_dif[]={0.0f,0.4f,0.4f};
-//яркость
 float mat_amb[]= { 0.2f , 0.2f , 0.2f } ;
-//глянцевость
 float mat_spec[] = { 0.6f ,0.6f , 0.6f } ;
 float mat_shininess=0.1f*128;
-
 float mat_dif1[]={0.9f,0.2f,0.2f};
 float mat_dif2[]={0.2f,0.9f,0.2f};
-//яркость
-float mat_amb1[]= { 0.4f , 0.4f , 0.4f } ;
-//глянцевость
-float mat_spec1[] = { 0.4f ,0.4f , 0.4f } ;
-float mat_shininess1=0.9f*128;
-
+GLuint TEXID[2];
 void init(){
 	GLfloat light_ambient[]={0.3,0.3,0.3,1};
 	GLfloat light_diffuse[]={1,1,1,1};
@@ -59,16 +62,22 @@ double bublicAngle=0;
 double qubeAngle=0;
 
 void timf(int value){
+	fpsn++;
 	tEnd=omp_get_wtime();
 	FPS=tEnd-tStart;
-	printf("%lf\n",1/FPS);
+	fps+=FPS;
+	if (fps>1) {
+		printf("FPS = %d\n",fpsn);
+		fps=0;
+		fpsn=0;
+	}
+		
+	FPS=1/FPS;
 	bublicAngle+=Angle;
 	qubeAngle+=Angle;
-	if (flag>0) {
-		//здесь определяется расстояние
-		cam.z+=8*FPS;
-		flag--;
-	}
+	
+	cam.ifgo();
+	
 	glutPostRedisplay();
 	glutTimerFunc(20,timf,0);
 	tStart=omp_get_wtime();
@@ -87,12 +96,7 @@ int stars[900];
 void Display(void){
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	
-	
-	
 	glMatrixMode(GL_MODELVIEW);
-	
-	
 	
 	//qube
 	glRotatef(qubeAngle,0,1,0);
@@ -110,70 +114,52 @@ void Display(void){
 	glMaterialf(GL_FRONT,GL_SHININESS,mat_shininess);
 
 	//Sphere 1 in center
-	//glRotatef(qubeAngle,1,1,0);
-	//glRotatef(bublicAngle,1,0,0);
-	glutSolidSphere(3.0,15,15);
+	//glutSolidSphere(3.0,15,15);
+	glEnable(GL_TEXTURE_2D);
+	glBegin(GL_QUADS);
 	
-	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
-	
+	glTexCoord2f(0,0);
+	glVertex3f(0,0,0);
+	glTexCoord2f(0,1);
+	glVertex3f(1,0,0);
+	glTexCoord2f(1,1);
+	glVertex3f(1,0,1);
+	glTexCoord2f(1,0);
+	glVertex3f(0,0,1);
+	glEnd();
+	gluSphere(smthg,3,30,30);
+	glDisable(GL_TEXTURE_2D);
 	//Sphere 2
-	//glRotatef(bublicAngle,1,0,0);
-	
+	//glEnable(GL_TEXTURE_2D);
 	glTranslated(40,0,0);
-	//glRotatef(qubeAngle,0,1,0);
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif2);
-	
-	//glPushMatrix();
+	//gluSphere(smthg,2,30,30);
 	glutSolidSphere(2.0,30,30);
-	
+	//glDisable(GL_TEXTURE_2D);
 	//Torus
-	//glPopMatrix();
-	//glRotatef(bublicAngle,1,0,0);
-	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif1);
-	glRotatef(qubeAngle,0,1,0);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
+	glRotatef(qubeAngle*2,0,1,0);
 	glTranslated(10,0,0);
-	
-	
-	glutSolidTorus(0.275,0.85,30,30);
-	
-	/*
-	
-	glPushMatrix();
-	//glPushMatrix();
-	//glRotatef(qubeAngle,1,1,0);
-	
-	//glPushMatrix();
-	glTranslatef(0,0.0,30);
-	glRotatef(bublicAngle,1,0,0);
-	glutSolidSphere(1.0,15,15);
-	glPopMatrix();
-	
-	
-	glPushMatrix();
-	glTranslated(0,2,0);
-	glRotated(qubeAngle,1,0,0);
-	
-	glPushMatrix();
-	glTranslatef(0,0,30);
-	glRotatef(bublicAngle,1,0,0);
 	glutSolidTorus(0.275,0.85,30,30);
 	
 	
-	
-	glPopMatrix();
-	glPopMatrix();
-	*/
+	glDisable(GL_DEPTH_TEST);
+	glLoadIdentity();
+	glBegin(GL_POINTS);
+	glColor3f(1,0,0);
+	glPointSize(5);
+	glVertex3i(0,0,-2);
+	glEnd();
 	
 	//повороты для камеры
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	//glLoadIdentity();
 	glRotated(cam.oyz,-1,0,0);
 	glRotated(cam.oxz,0,-1,0);
 	glTranslated(cam.x,cam.y,cam.z);
 	
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
-	glDisable(GL_DEPTH_TEST);
 	glBegin(GL_POINTS);
 	glColor3f(0.5,0.5,0.5);
 	glPointSize(5);
@@ -181,7 +167,11 @@ void Display(void){
 		glVertex3i(stars[i],stars[i+1],stars[i+2]);
 	glEnd();
 	
+	
+	
+	
 	glFlush();
+	glutSwapBuffers();
 }
 
 void Reshape(GLint w,GLint h){
@@ -199,30 +189,20 @@ void Keyboard(unsigned char key, int x, int y){
 	
 	switch (key){
 		case 'w':
-			//здесь определяется скорость
-			flag=1/(FPS*10);
-			//cam.z+=SPEED;
+			cam.gf=FPS/4;
+			//cam.goForward();
 			break;
 		case 's':
-			cam.z-=SPEED;
+			cam.gb=FPS/4;
+			//cam.goBack();
 			break;
 		case 'a':
-			cam.x+=SPEED;
+			cam.gl=FPS/4;
+			//cam.goLeft();
 			break;
 		case 'd':
-			cam.x-=SPEED;
-			break;
-		case 'i':
-			cam.goForward();
-			break;
-		case 'k':
-			cam.goBack();
-			break;
-		case 'j':
-			cam.goLeft();
-			break;
-		case 'l':
-			cam.goRight();
+			cam.gr=FPS/4;
+			//cam.goRight();
 			break;
 		case 'z':
 			cam.toDefault();
@@ -238,15 +218,13 @@ void Keyboard(unsigned char key, int x, int y){
 		case '3':
 			Angle=0;
 			break;
-			
 	}
-	glutPostRedisplay();
+	//glutPostRedisplay();
 }
 
 void MouseButton(int button, int state, int x, int y) {
 
 	// только при начале движения, если нажата левая кнопка
-	//printf("%d %d\n",x,y);
 	if (button == GLUT_LEFT_BUTTON) {
 
 		// когда кнопка отпущена
@@ -255,7 +233,6 @@ void MouseButton(int button, int state, int x, int y) {
 
 		}
 		else  {// state = GLUT_DOWN
-			//printf("MouseButton() left on %d %d\n",x,y);
 			startx=x;
 			starty=y;
 		}
@@ -268,7 +245,6 @@ void MouseMove(int x, int y) {
 	startx=x;
 	starty=y;
 	cam.changeAngle(deltax,deltay);
-	//printf("MouseMove()\nsxy %d %d\nxy %d %d\ndxy %d %d\n",startx,starty,x,y,deltax,deltay);
 	glutPostRedisplay();
 
 }
@@ -280,18 +256,15 @@ int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
 
-	glShadeModel(GL_SMOOTH);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB |GLUT_DEPTH|GLUT_MULTISAMPLE);
+	//glShadeModel(GL_SMOOTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB |GLUT_DEPTH|GLUT_MULTISAMPLE);
 	glutInitWindowPosition(200,200);
 	glutInitWindowSize(Width,Height);
 	glutCreateWindow("Space shit");
 	init();
-	//включение и загрузка вершинных и цветовых массивов
+	
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_NORMALIZE);
-	//glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER,GL_FALSE);
-	//glLightf(GL_LIGHT1,GL_SPOT_EXPONENT,64);
-	//glMateriali(GL_FRONT_AND_BACK,GL_AMBIENT,0.5);
+	//включение и загрузка вершинных и цветовых массивов
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glVertexPointer(3,GL_DOUBLE,0,obj.getCoords());
@@ -300,7 +273,29 @@ int main(int argc, char **argv)
 	for (int i=0;i<900;i++)
 	stars[i]=rand()%300-150;
 	
+	for (int i=0;i<64*64;i+=6) {array[i]=255; array[i+1]=0; array[i+2]=0;
+		array[i+3]=0; array[i+4]=255; array[i+5]=0;}
 	
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1 );
+	glGenTextures(1,TEXID);
+	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,32,32,GL_RGB,GL_UNSIGNED_BYTE,array);
+	gluQuadricTexture(smthg,GL_TRUE);
+	
+	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,
+	( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+	( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+	( float )GL_REPEAT) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+	( float )GL_REPEAT) ;
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
+	( float )GL_MODULATE) ;
+	
+	
+	
+	delete [] array;
 	glutTimerFunc(20,timf,0);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
@@ -309,5 +304,6 @@ int main(int argc, char **argv)
 	glutMotionFunc(MouseMove);
 	tStart=omp_get_wtime();
 	glutMainLoop();
+	
 	return 0;
 }
