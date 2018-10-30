@@ -31,11 +31,11 @@ double tEnd,tStart;
 int Angle=1;
 GLint Width=1024,  Height=1024;
 
-unsigned char * array=bmpparser("tiles.bmp");
-unsigned char * array1 = new unsigned char[64*64];
+unsigned char * array=new unsigned char[64*64*3];
+unsigned char * array1 = bmpparser("tiles.bmp");//new unsigned char[64*64];
 GLUquadricObj * smthg = gluNewQuadric();
 GLUquadricObj * earth = gluNewQuadric();
-float mat_dif[]={0.0f,0.4f,0.4f};
+float mat_dif[]={0.9f,0.9f,0.9f};
 float mat_amb[]= { 0.2f , 0.2f , 0.2f } ;
 float mat_spec[] = { 0.6f ,0.6f , 0.6f } ;
 float mat_shininess=0.1f*128;
@@ -97,7 +97,6 @@ void Display(void){
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
-	
 	//qube
 	glRotatef(qubeAngle,0,1,0);
 	glEnable(GL_DEPTH_TEST);
@@ -115,6 +114,7 @@ void Display(void){
 
 	//Sphere 1 in center
 	//glutSolidSphere(3.0,15,15);
+	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
 	glEnable(GL_TEXTURE_2D);
 	glBegin(GL_QUADS);
 	
@@ -130,12 +130,16 @@ void Display(void){
 	gluSphere(smthg,3,30,30);
 	glDisable(GL_TEXTURE_2D);
 	//Sphere 2
-	//glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
+	glEnable(GL_TEXTURE_2D);
+	
+	
+	
 	glTranslated(40,0,0);
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif2);
-	//gluSphere(smthg,2,30,30);
-	glutSolidSphere(2.0,30,30);
-	//glDisable(GL_TEXTURE_2D);
+	gluSphere(earth,2,30,30);
+	//glutSolidSphere(2.0,30,30);
+	glDisable(GL_TEXTURE_2D);
 	//Torus
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
 	glRotatef(qubeAngle*2,0,1,0);
@@ -190,19 +194,15 @@ void Keyboard(unsigned char key, int x, int y){
 	switch (key){
 		case 'w':
 			cam.gf=FPS/4;
-			//cam.goForward();
 			break;
 		case 's':
 			cam.gb=FPS/4;
-			//cam.goBack();
 			break;
 		case 'a':
 			cam.gl=FPS/4;
-			//cam.goLeft();
 			break;
 		case 'd':
 			cam.gr=FPS/4;
-			//cam.goRight();
 			break;
 		case 'z':
 			cam.toDefault();
@@ -219,7 +219,6 @@ void Keyboard(unsigned char key, int x, int y){
 			Angle=0;
 			break;
 	}
-	//glutPostRedisplay();
 }
 
 void MouseButton(int button, int state, int x, int y) {
@@ -229,7 +228,6 @@ void MouseButton(int button, int state, int x, int y) {
 
 		// когда кнопка отпущена
 		if (state == GLUT_UP) {
-			//printf("MouseButton() left off %d %d\n",x,y);
 
 		}
 		else  {// state = GLUT_DOWN
@@ -255,7 +253,7 @@ void MouseMove(int x, int y) {
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
-
+	//интерполяция цветов
 	//glShadeModel(GL_SMOOTH);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB |GLUT_DEPTH|GLUT_MULTISAMPLE);
 	glutInitWindowPosition(200,200);
@@ -273,13 +271,17 @@ int main(int argc, char **argv)
 	for (int i=0;i<900;i++)
 	stars[i]=rand()%300-150;
 	
-	for (int i=0;i<64*64;i+=6) {array[i]=255; array[i+1]=0; array[i+2]=0;
+	for (int i=0;i<64*64*3;i+=6) {array[i]=255; array[i+1]=0; array[i+2]=0;
 		array[i+3]=0; array[i+4]=255; array[i+5]=0;}
-	
+	for (int i=0;i<1000;i++) {int n=rand()%(64*63); array[n*3]=100; array[n*3+1]=255; array[n*3+2]=100;}
+	for (int i=64*63*3;i<64*64*3;i++) {array[i]=0;}
+	for (int i=0;i<64*6;i++) {array[i]=0;}
+	//for (int i=0;i<64*64;i+=6) {array1[i]=0; array1[i+1]=0; array1[i+2]=255;
+		//array1[i+3]=0; array1[i+4]=255; array1[i+5]=255;}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1 );
-	glGenTextures(1,TEXID);
+	glGenTextures(2,TEXID);
 	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,3,32,32,GL_RGB,GL_UNSIGNED_BYTE,array);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,64,64,GL_RGB,GL_UNSIGNED_BYTE,array);
 	gluQuadricTexture(smthg,GL_TRUE);
 	
 	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,
@@ -293,9 +295,23 @@ int main(int argc, char **argv)
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
 	( float )GL_MODULATE) ;
 	
+	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,64,64,GL_RGB,GL_UNSIGNED_BYTE,array1);
+	gluQuadricTexture(earth,GL_TRUE);
 	
+	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,
+	( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+	( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+	( float )GL_REPEAT) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+	( float )GL_REPEAT) ;
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
+	( float )GL_MODULATE) ;
 	
 	delete [] array;
+	delete [] array1;
 	glutTimerFunc(20,timf,0);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);

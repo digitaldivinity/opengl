@@ -11,7 +11,7 @@
 
 
 unsigned char * bmpparser(const char * name){
-	unsigned char * array=new unsigned char[64*64];
+	unsigned char * array=new unsigned char[64*64*3];
 	try{
 		
 		char buf[64];
@@ -26,7 +26,7 @@ unsigned char * bmpparser(const char * name){
 		read(fd,buf,shift-14);
 		
 		int i=0;
-		while (read(fd,&array[i],1)&& i<64*64) {printf("%d i = %d\n",array[i],i); i++;}
+		while (read(fd,&array[i],1)&& i<64*64*3) {printf("%d i = %d\n",array[i],i); i++;}
 		
 		close(fd);
 	}
