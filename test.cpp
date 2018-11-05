@@ -32,21 +32,20 @@ int Angle=1;
 GLint Width=1024,  Height=1024;
 
 unsigned char * array=new unsigned char[64*64*3];
-unsigned char * array1 = bmpparser("tiles.bmp");//new unsigned char[64*64];
 GLUquadricObj * smthg = gluNewQuadric();
 GLUquadricObj * earth = gluNewQuadric();
 float mat_dif[]={0.9f,0.9f,0.9f};
 float mat_amb[]= { 0.2f , 0.2f , 0.2f } ;
 float mat_spec[] = { 0.6f ,0.6f , 0.6f } ;
 float mat_shininess=0.1f*128;
-float mat_dif1[]={0.9f,0.2f,0.2f};
-float mat_dif2[]={0.2f,0.9f,0.2f};
+float mat_dif1[]={0.3f,0.3f,0.3f};
+float mat_dif2[]={0.3f,0.3f,0.3f};
 GLuint TEXID[2];
 void init(){
 	GLfloat light_ambient[]={0.3,0.3,0.3,1};
 	GLfloat light_diffuse[]={1,1,1,1};
 	GLfloat light_specular[]={1,1,1,1};
-	GLfloat light_position[]={1,1,1,0};
+	GLfloat light_position[]={0,0,0,1};
 	
 	glLightfv(GL_LIGHT0,GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT0,GL_DIFFUSE, light_diffuse);
@@ -94,6 +93,9 @@ Object obj("coco");
 int stars[900];
 
 void Display(void){
+	
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
@@ -136,7 +138,7 @@ void Display(void){
 	
 	
 	glTranslated(40,0,0);
-	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif2);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif1);
 	gluSphere(earth,2,30,30);
 	//glutSolidSphere(2.0,30,30);
 	glDisable(GL_TEXTURE_2D);
@@ -157,6 +159,7 @@ void Display(void){
 	
 	//повороты для камеры
 	//glLoadIdentity();
+	
 	glRotated(cam.oyz,-1,0,0);
 	glRotated(cam.oxz,0,-1,0);
 	glTranslated(cam.x,cam.y,cam.z);
@@ -270,48 +273,32 @@ int main(int argc, char **argv)
 	
 	for (int i=0;i<900;i++)
 	stars[i]=rand()%300-150;
-	
-	for (int i=0;i<64*64*3;i+=6) {array[i]=255; array[i+1]=0; array[i+2]=0;
-		array[i+3]=0; array[i+4]=255; array[i+5]=0;}
-	for (int i=0;i<1000;i++) {int n=rand()%(64*63); array[n*3]=100; array[n*3+1]=255; array[n*3+2]=100;}
-	for (int i=64*63*3;i<64*64*3;i++) {array[i]=0;}
-	for (int i=0;i<64*6;i++) {array[i]=0;}
-	//for (int i=0;i<64*64;i+=6) {array1[i]=0; array1[i+1]=0; array1[i+2]=255;
-		//array1[i+3]=0; array1[i+4]=255; array1[i+5]=255;}
+
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1 );
 	glGenTextures(2,TEXID);
+	korch_texture tex2("earth.bmp");
 	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,3,64,64,GL_RGB,GL_UNSIGNED_BYTE,array);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex2.getWidth(),tex2.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex2.get());
 	gluQuadricTexture(smthg,GL_TRUE);
 	
-	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,
-	( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-	( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-	( float )GL_REPEAT) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-	( float )GL_REPEAT) ;
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
-	( float )GL_MODULATE) ;
+	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE);
 	
+	
+	korch_texture tex1("melon.bmp");
 	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,3,64,64,GL_RGB,GL_UNSIGNED_BYTE,array1);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex1.getWidth(),tex1.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex1.get());
 	gluQuadricTexture(earth,GL_TRUE);
-	
-	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,
-	( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-	( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-	( float )GL_REPEAT) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-	( float )GL_REPEAT) ;
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
-	( float )GL_MODULATE) ;
+	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT) ;
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE) ;
 	
 	delete [] array;
-	delete [] array1;
 	glutTimerFunc(20,timf,0);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
