@@ -38,10 +38,13 @@ float mat_dif[]={0.9f,0.9f,0.9f};
 float mat_amb[]= { 0.2f , 0.2f , 0.2f } ;
 float mat_spec[] = { 0.6f ,0.6f , 0.6f } ;
 float mat_shininess=0.1f*128;
-float mat_dif1[]={0.3f,0.3f,0.3f};
-float mat_dif2[]={0.3f,0.3f,0.3f};
+float mat_dif_red[]={0.7f,0.3f,0.3f};
+float mat_dif_blue[]={0.1f,0.1f,0.3f};
 GLuint TEXID[2];
+
+
 void init(){
+	//light params
 	GLfloat light_ambient[]={0.3,0.3,0.3,1};
 	GLfloat light_diffuse[]={1,1,1,1};
 	GLfloat light_specular[]={1,1,1,1};
@@ -55,6 +58,36 @@ void init(){
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
+	
+	//material params
+	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_amb);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
+	glMaterialfv(GL_FRONT,GL_SPECULAR,mat_spec);
+	glMaterialf(GL_FRONT,GL_SHININESS,mat_shininess);
+	
+	//texture params
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1 );
+	glGenTextures(2,TEXID);
+	korch_texture tex2("earth.bmp");
+	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex2.getWidth(),tex2.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex2.get());
+	gluQuadricTexture(smthg,GL_TRUE);
+	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE);
+	
+	korch_texture tex1("melon.bmp");
+	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex1.getWidth(),tex1.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex1.get());
+	gluQuadricTexture(earth,GL_TRUE);
+	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,( float )GL_NEAREST) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT) ;
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT) ;
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE) ;
+	//glEnable(GL_TEXTURE_2D);
 }
 
 double bublicAngle=0;
@@ -82,100 +115,84 @@ void timf(int value){
 	tStart=omp_get_wtime();
 }
 
-
-
-
 int startx,starty;
 int deltax,deltay;
 
 Object obj("coco");
 
-int stars[900];
+double stars[900];
 
 void Display(void){
 	
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glClearColor(0,0,0,1);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
-	//qube
-	glRotatef(qubeAngle,0,1,0);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
-	glDrawArrays(GL_TRIANGLES,0, obj.getSize());
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-
-	
-	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_amb);
-	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif1);
-	glMaterialfv(GL_FRONT,GL_SPECULAR,mat_spec);
-	glMaterialf(GL_FRONT,GL_SHININESS,mat_shininess);
-
-	//Sphere 1 in center
-	//glutSolidSphere(3.0,15,15);
-	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
-	glEnable(GL_TEXTURE_2D);
-	glBegin(GL_QUADS);
-	
-	glTexCoord2f(0,0);
-	glVertex3f(0,0,0);
-	glTexCoord2f(0,1);
-	glVertex3f(1,0,0);
-	glTexCoord2f(1,1);
-	glVertex3f(1,0,1);
-	glTexCoord2f(1,0);
-	glVertex3f(0,0,1);
-	glEnd();
-	gluSphere(smthg,3,30,30);
-	glDisable(GL_TEXTURE_2D);
-	//Sphere 2
-	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
-	glEnable(GL_TEXTURE_2D);
-	
-	
-	
-	glTranslated(40,0,0);
-	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif1);
-	gluSphere(earth,2,30,30);
-	//glutSolidSphere(2.0,30,30);
-	glDisable(GL_TEXTURE_2D);
-	//Torus
-	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
-	glRotatef(qubeAngle*2,0,1,0);
-	glTranslated(10,0,0);
-	glutSolidTorus(0.275,0.85,30,30);
-	
-	
-	glDisable(GL_DEPTH_TEST);
 	glLoadIdentity();
-	glBegin(GL_POINTS);
-	glColor3f(1,0,0);
-	glPointSize(5);
-	glVertex3i(0,0,-2);
-	glEnd();
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glClearColor(0,0,0,1);
 	
-	//повороты для камеры
-	//glLoadIdentity();
-	
+	//повороты и смещение для камеры
 	glRotated(cam.oyz,-1,0,0);
 	glRotated(cam.oxz,0,-1,0);
 	glTranslated(cam.x,cam.y,cam.z);
 	
-	glEnable(GL_DEPTH_TEST);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif_red);
+	//central sphere
+	glPushMatrix();
+	glutSolidSphere(3,30,30);
+	glPopMatrix();
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
+	
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
+	//first sphere
+	glPushMatrix();
+	glRotated(qubeAngle,0,1,0);
+	glTranslated(20,0,0);
+	gluSphere(earth,2,30,30);
+	glPopMatrix();
+	
+	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
+	//second sphere
+	glPushMatrix();
+	glRotated(qubeAngle*2,0,1,0);
+	glTranslated(40,0,0);
+	gluSphere(smthg,3,30,30);
+	glPopMatrix();
+	
+	glDisable(GL_TEXTURE_2D);
+	
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif_blue);
+	//third sphere
+	glPushMatrix();
+	glRotated(qubeAngle,0,-1,0);
+	glTranslated(60,0,0);
+	glutSolidSphere(3,30,30);
+	//torus bound with sphere
+	glRotated(qubeAngle,0,-2,0);
+	glTranslated(10,0,0);
+	glRotated(qubeAngle,1,1,1);
+	glutSolidTorus(0.275,0.85,30,30);
+	glPopMatrix();
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
+	
+	//cube
+	glPushMatrix();
+	glTranslated(30,0,0);
+	glRotated(qubeAngle,0,1,0);
 	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
+	glDrawArrays(GL_TRIANGLES,0, obj.getSize());
+	glEnable(GL_LIGHTING);
+	//glutSolidCube(3);
+	glPopMatrix();
+	
+	//stars
+	glDisable(GL_LIGHTING);
 	glBegin(GL_POINTS);
 	glColor3f(0.5,0.5,0.5);
 	glPointSize(5);
 	for (int i=0;i<900;i+=3)
 		glVertex3i(stars[i],stars[i+1],stars[i+2]);
 	glEnd();
-	
-	
-	
+	glEnable(GL_LIGHTING);
 	
 	glFlush();
 	glutSwapBuffers();
@@ -271,34 +288,18 @@ int main(int argc, char **argv)
 	glVertexPointer(3,GL_DOUBLE,0,obj.getCoords());
 	glColorPointer(3,GL_DOUBLE,0,obj.getColors());
 	
-	for (int i=0;i<900;i++)
-	stars[i]=rand()%300-150;
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1 );
-	glGenTextures(2,TEXID);
-	korch_texture tex2("earth.bmp");
-	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex2.getWidth(),tex2.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex2.get());
-	gluQuadricTexture(smthg,GL_TRUE);
-	
-	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE);
-	
-	
-	korch_texture tex1("melon.bmp");
-	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex1.getWidth(),tex1.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex1.get());
-	gluQuadricTexture(earth,GL_TRUE);
-	glTexParameterf (GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,( float )GL_NEAREST) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT) ;
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT) ;
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE) ;
-	
-	delete [] array;
+	{
+		double a;
+		for (int i=0;i<900;i++){
+			stars[i]=rand()%500-250;
+			stars[i+1]=rand()%500-250;
+			stars[i+2]=rand()%500-250;
+			a=sqrt(pow(stars[i],2)+pow(stars[i+1],2)+pow(stars[i+2],2));
+			stars[i]=300*stars[i]/a;
+			stars[i+1]=300*stars[i+1]/a;
+			stars[i+2]=300*stars[i+2]/a;
+		}
+	}
 	glutTimerFunc(20,timf,0);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
