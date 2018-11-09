@@ -9,7 +9,7 @@
 #include "bmpparser.h"
 /*
  * полет вперед и по сторонам +
- * плавный полет +-
+ * плавный полет +
  * регулировка относительно фпс + если падает фпс то падает и скорость камеры +
  * сделать чтобы при изменении размера не колбасило +
  * сделать измерение времени между вызовами таймера +
@@ -18,10 +18,10 @@
  * для мышки недостаточно таймера +
  * перенести все измерение времени в дисплей, баг появляется +
  * редисплей от мышки не учитывается в фпс +
- * 
+ * иногда начинает проседать, хотя фпс показывает нормальный -
  */
 
-Camera cam(0.3,0.5);
+Camera cam(0.3,0.9);
 double FPS=60;
 double fps=0;
 int fpsn=0;
@@ -98,7 +98,7 @@ void timf(int value){
 	qubeAngle+=Angle;
 	if (qubeAngle>360) qubeAngle-=360;
 	if (bublicAngle>360) bublicAngle-=360;
-	cam.ifgo();
+	cam.move();
 	
 	glutPostRedisplay();
 	glutTimerFunc(20,timf,0);
@@ -214,16 +214,16 @@ void KeyDown(unsigned char key, int x, int y){
 	
 	switch (key){
 		case 'w':
-			cam.gf=FPS/4;
+			cam.gf=true;
 			break;
 		case 's':
-			cam.gb=FPS/4;
+			cam.gb=true;
 			break;
 		case 'a':
-			cam.gl=FPS/4;
+			cam.gl=true;
 			break;
 		case 'd':
-			cam.gr=FPS/4;
+			cam.gr=true;
 			break;
 		case 'z':
 			cam.toDefault();
@@ -242,7 +242,22 @@ void KeyDown(unsigned char key, int x, int y){
 	}
 }
 
-//void KeyUp(unsigned char key, int x, int y)
+void KeyUp(unsigned char key, int x, int y){
+	switch (key){
+		case 'w':
+			cam.gf=false;
+			break;
+		case 's':
+			cam.gb=false;
+			break;
+		case 'a':
+			cam.gl=false;
+			break;
+		case 'd':
+			cam.gr=false;
+			break;
+		}	
+}
 
 
 void MouseButton(int button, int state, int x, int y) {
@@ -284,7 +299,7 @@ int main(int argc, char **argv)
 	glutInitWindowSize(Width,Height);
 	glutCreateWindow("Space shit");
 	init();
-//	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
+	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 	glEnable(GL_DEPTH_TEST);
 	//включение и загрузка вершинных и цветовых массивов
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -307,12 +322,13 @@ int main(int argc, char **argv)
 	glutTimerFunc(20,timf,0);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
-	glutKeyboardFunc(Keyboard);
+	glutKeyboardFunc(KeyDown);
+	glutKeyboardUpFunc(KeyUp);
 	glutMouseFunc(MouseButton);
 	glutMotionFunc(MouseMove);
 	tStart=omp_get_wtime();
 	glutMainLoop();
-//	glutSetKeyRepeat(GLUT_KEY_REPEAT_DEFAULT);
+	glutSetKeyRepeat(GLUT_KEY_REPEAT_DEFAULT);
 	
 	return 0;
 }

@@ -6,10 +6,11 @@ struct Camera{
 	double dx,dy,dz;
 	double speed;
 	double sensitivity;
-	double gf,gr,gl,gb;
+	bool gf,gr,gl,gb;
 	Camera(){
 		x=y=oxz=oyz=z=0;
 		sensitivity=0.3;
+		speed=0.3;
 	}
 	Camera(double sensitivity,double speed){
 		x=y=oxz=oyz=z=0;
@@ -76,23 +77,11 @@ struct Camera{
 		dy=b;
 		dz=c;
 	}
-	void ifgo(){
-		if (gf>0){
-			gf--;
-			goForward();
-		}
-		if (gb>0){
-			gb--;
-			goBack();
-		}
-		if (gl>0){
-			gl--;
-			goLeft();
-		}
-		if (gr>0){
-			gr--;
-			goRight();
-		}
+	void move(){
+		if (gf) goForward();
+		if (gb) goBack();
+		if (gl) goLeft();
+		if (gr) goRight();
 	}
 };
 
