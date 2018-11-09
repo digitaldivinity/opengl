@@ -10,19 +10,19 @@
 /*
  * полет вперед и по сторонам +
  * плавный полет +-
- * регулировка относительно фпс +- если падает фпс то падает и скорость камеры
+ * регулировка относительно фпс + если падает фпс то падает и скорость камеры +
  * сделать чтобы при изменении размера не колбасило +
  * сделать измерение времени между вызовами таймера +
  * добавить двойную буферизацию +
  * отключил редислпей в обработчике клавитуры +
  * для мышки недостаточно таймера +
- * перенести все измерение времени в дисплей, баг появляется
- * редисплей от мышки не учитывается в фпс
+ * перенести все измерение времени в дисплей, баг появляется +
+ * редисплей от мышки не учитывается в фпс +
  * 
  */
 
 Camera cam(0.3,0.5);
-double FPS;
+double FPS=60;
 double fps=0;
 int fpsn=0;
 int flag=0; //это нужно подгонять под фпс
@@ -94,25 +94,14 @@ double bublicAngle=0;
 double qubeAngle=0;
 
 void timf(int value){
-	fpsn++;
-	tEnd=omp_get_wtime();
-	FPS=tEnd-tStart;
-	fps+=FPS;
-	if (fps>1) {
-		printf("FPS = %d\n",fpsn);
-		fps=0;
-		fpsn=0;
-	}
-		
-	FPS=1/FPS;
 	bublicAngle+=Angle;
 	qubeAngle+=Angle;
-	
+	if (qubeAngle>360) qubeAngle-=360;
+	if (bublicAngle>360) bublicAngle-=360;
 	cam.ifgo();
 	
 	glutPostRedisplay();
 	glutTimerFunc(20,timf,0);
-	tStart=omp_get_wtime();
 }
 
 int startx,starty;
@@ -123,7 +112,6 @@ Object obj("coco");
 double stars[900];
 
 void Display(void){
-	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -196,6 +184,19 @@ void Display(void){
 	
 	glFlush();
 	glutSwapBuffers();
+	
+	//вычисление fps
+	fpsn++; //количество кадров
+	tEnd=omp_get_wtime();
+	FPS=tEnd-tStart; 
+	fps+=FPS;
+	if (fps>1) {
+		printf("FPS = %d\n",fpsn);
+		fps=0;
+		fpsn=0;
+	}
+	FPS=1/FPS;
+	tStart=omp_get_wtime();	
 }
 
 void Reshape(GLint w,GLint h){
@@ -205,11 +206,11 @@ void Reshape(GLint w,GLint h){
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	gluPerspective(45,(GLfloat)w/h,1,500);
+	gluPerspective(45,(GLfloat)w/h,1,1000);
 	glutPostRedisplay();
 }
 
-void Keyboard(unsigned char key, int x, int y){
+void KeyDown(unsigned char key, int x, int y){
 	
 	switch (key){
 		case 'w':
@@ -240,6 +241,9 @@ void Keyboard(unsigned char key, int x, int y){
 			break;
 	}
 }
+
+//void KeyUp(unsigned char key, int x, int y)
+
 
 void MouseButton(int button, int state, int x, int y) {
 
@@ -280,7 +284,7 @@ int main(int argc, char **argv)
 	glutInitWindowSize(Width,Height);
 	glutCreateWindow("Space shit");
 	init();
-	
+//	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 	glEnable(GL_DEPTH_TEST);
 	//включение и загрузка вершинных и цветовых массивов
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -290,7 +294,7 @@ int main(int argc, char **argv)
 	
 	{
 		double a;
-		for (int i=0;i<900;i++){
+		for (int i=0;i<900;i+=3){
 			stars[i]=rand()%500-250;
 			stars[i+1]=rand()%500-250;
 			stars[i+2]=rand()%500-250;
@@ -308,6 +312,7 @@ int main(int argc, char **argv)
 	glutMotionFunc(MouseMove);
 	tStart=omp_get_wtime();
 	glutMainLoop();
+//	glutSetKeyRepeat(GLUT_KEY_REPEAT_DEFAULT);
 	
 	return 0;
 }
