@@ -3,7 +3,6 @@
 #include <math.h>
 #include <GL/glut.h>
 #include <GL/glu.h>
-#include <GL/glm.h>
 #include "input.h"
 #include "camera.h"
 #include <omp.h>
@@ -54,7 +53,7 @@ void init(){
 	GLfloat light_specular[]={1,1,1,1};
 	GLfloat light_position[]={0,0,0,1};
 	//GLfloat light_emission[]={0.8,0.3,0.3,1};
-	
+
 	glLightfv(GL_LIGHT0,GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT0,GL_DIFFUSE, light_diffuse);
 	glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
@@ -64,14 +63,14 @@ void init(){
 	glLightfv(GL_LIGHT1,GL_DIFFUSE, light_diffuse);
 	glLightfv(GL_LIGHT1,GL_SPECULAR,light_specular);
 	glLightfv(GL_LIGHT1,GL_POSITION, light_position);
-	
+
 	//убывание интенсивности света на расстоянии
 	glLightf(GL_LIGHT0,GL_LINEAR_ATTENUATION, 0.001f);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
 	glEnable(GL_DEPTH_TEST);
-	
+
 	//material params
 	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_amb);
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
@@ -90,7 +89,7 @@ void init(){
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,( float )GL_REPEAT);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,( float )GL_REPEAT);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,( float )GL_MODULATE);
-	
+
 	korch_texture tex1("melon.bmp");
 	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
 	gluBuild2DMipmaps(GL_TEXTURE_2D,3,tex1.getWidth(),tex1.getHeight(),GL_RGB,GL_UNSIGNED_BYTE,tex1.get());
@@ -112,7 +111,7 @@ void timf(int value){
 	if (qubeAngle>360) qubeAngle-=360;
 	if (bublicAngle>360) bublicAngle-=360;
 	cam.move();
-	
+
 	glutPostRedisplay();
 	glutTimerFunc(20,timf,0);
 }
@@ -131,13 +130,13 @@ void Display(void){
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glClearColor(0,0,0,1);
-	
+
 	//повороты и смещение для камеры
 	glRotated(cam.oyz,-1,0,0);
 	glRotated(cam.oxz,0,-1,0);
 	glTranslated(cam.x,cam.y,cam.z);
 	glLightfv(GL_LIGHT0,GL_POSITION, light_position);
-	
+
 	//солнце + отдельное освещение для него + материал
 	glEnable(GL_LIGHT1);
 	glPushMatrix();
@@ -150,7 +149,7 @@ void Display(void){
 	glPopMatrix();
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
 	glDisable(GL_LIGHT1);
-	
+
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,TEXID[0]);
 	//first sphere
@@ -159,7 +158,7 @@ void Display(void){
 	glTranslated(20,0,0);
 	gluSphere(earth,2,30,30);
 	glPopMatrix();
-	
+
 	glBindTexture(GL_TEXTURE_2D,TEXID[1]);
 	//second sphere
 	glPushMatrix();
@@ -167,9 +166,9 @@ void Display(void){
 	glTranslated(40,0,0);
 	gluSphere(smthg,3,30,30);
 	glPopMatrix();
-	
+
 	glDisable(GL_TEXTURE_2D);
-	
+
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif_blue);
 	//third sphere
 	glPushMatrix();
@@ -183,7 +182,7 @@ void Display(void){
 	glutSolidTorus(0.275,0.85,30,30);
 	glPopMatrix();
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_dif);
-	
+
 	//cube
 	glPushMatrix();
 	glTranslated(30,0,0);
@@ -193,7 +192,7 @@ void Display(void){
 	glEnable(GL_LIGHTING);
 	//glutSolidCube(3);
 	glPopMatrix();
-	
+
 	//stars
 	glDisable(GL_LIGHTING);
 	glBegin(GL_POINTS);
@@ -203,14 +202,14 @@ void Display(void){
 		glVertex3i(stars[i],stars[i+1],stars[i+2]);
 	glEnd();
 	glEnable(GL_LIGHTING);
-	
+
 	glFlush();
 	glutSwapBuffers();
-	
+
 	//вычисление fps
 	fpsn++; //количество кадров
 	tEnd=omp_get_wtime();
-	FPS=tEnd-tStart; 
+	FPS=tEnd-tStart;
 	fps+=FPS;
 	if (fps>1) {
 		printf("FPS = %d\n",fpsn);
@@ -218,7 +217,7 @@ void Display(void){
 		fpsn=0;
 	}
 	FPS=1/FPS;
-	tStart=omp_get_wtime();	
+	tStart=omp_get_wtime();
 }
 
 void Reshape(GLint w,GLint h){
@@ -227,13 +226,13 @@ void Reshape(GLint w,GLint h){
 	glViewport(0,0,w,h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	
+
 	gluPerspective(45,(GLfloat)w/h,1,1000);
 	glutPostRedisplay();
 }
 
 void KeyDown(unsigned char key, int x, int y){
-	
+
 	switch (key){
 		case 'w':
 			cam.gf=true;
@@ -278,7 +277,7 @@ void KeyUp(unsigned char key, int x, int y){
 		case 'd':
 			cam.gr=false;
 			break;
-		}	
+		}
 }
 
 
@@ -328,7 +327,7 @@ int main(int argc, char **argv)
 	glEnableClientState(GL_COLOR_ARRAY);
 	glVertexPointer(3,GL_DOUBLE,0,obj.getCoords());
 	glColorPointer(3,GL_DOUBLE,0,obj.getColors());
-	
+
 	{
 		double a;
 		for (int i=0;i<900;i+=3){
@@ -341,7 +340,7 @@ int main(int argc, char **argv)
 			stars[i+2]=300*stars[i+2]/a;
 		}
 	}
-	
+
 	glutTimerFunc(20,timf,0);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
@@ -352,6 +351,6 @@ int main(int argc, char **argv)
 	tStart=omp_get_wtime();
 	glutMainLoop();
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_DEFAULT);
-	
+
 	return 0;
 }
